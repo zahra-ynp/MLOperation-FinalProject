@@ -23,7 +23,7 @@ class AttritionDeskApp:
     def show_home(self):
         # Home page
         st.title("Welcome to the AttritionDesk App!")
-        st.image("images/homepage.png", use_container_width=True)
+        st.image("App/images/homepage.png", use_container_width=True)
         st.subheader("About This App")
         st.write("""This application is designed to predict whether an employee is likely to stay or leave the company based on various input features. 
                     By analyzing key factors such as job satisfaction, last evaluation score, number of projects, average monthly hours worked, 
@@ -45,7 +45,7 @@ class AttritionDeskApp:
                     4. **Results**: Finally, the app will display the prediction result, indicating whether the employee is likely to stay or leave. 
                     This information can help HR departments and managers make informed decisions regarding employee engagement and retention strategies.
                 """)
-        st.image("images/get-started-image.jpg", use_container_width=True)
+        st.image("App/images/get-started-image.jpg", use_container_width=True)
 
     def show_prediction(self):
         # Prediction page
