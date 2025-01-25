@@ -6,9 +6,9 @@ import pandas as pd
 class AttritionDeskApp:
     def __init__(self):
         # Load the best model, scaler, and encoder pickle files
-        self.model = joblib.load('best_model.pkl')  
-        self.scaler = joblib.load('scaler.pkl')  
-        self.encoder = joblib.load('encoder.pkl')  
+        self.model = joblib.load('App/best_model.pkl')  
+        self.scaler = joblib.load('App/scaler.pkl')  
+        self.encoder = joblib.load('App/encoder.pkl')  
 
     def run(self):
         # Sidebar for navigation
@@ -50,7 +50,7 @@ class AttritionDeskApp:
     def show_prediction(self):
         # Prediction page
         st.title("Make a Prediction")
-        st.image("images/leave-or-stay.png", use_container_width=True)
+        st.image("App/images/leave-or-stay.png", use_container_width=True)
         st.subheader("Please enter the following details about the employee:")
 
         # Input fields with descriptions
@@ -92,10 +92,10 @@ class AttritionDeskApp:
             st.subheader("Prediction Result:")
             if prediction[0] == 1:
                 st.error("The employee is likely to leave.")
-                st.image("images/leave.jpg", use_container_width=True)
+                st.image("App/images/leave.jpg", use_container_width=True)
             else:
                 st.success("The employee is likely to stay.")
-                st.image("images/stay.png", use_container_width=True)
+                st.image("App/images/stay.png", use_container_width=True)
 
 # Run the app
 if __name__ == "__main__":
