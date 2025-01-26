@@ -6,9 +6,9 @@ import pandas as pd
 class AttritionDeskApp:
     def __init__(self):
         # Load the best model, scaler, and encoder pickle files
-        self.model = joblib.load('App/best_model.pkl')  
-        self.scaler = joblib.load('App/scaler.pkl')  
-        self.encoder = joblib.load('App/encoder.pkl')  
+        self.model = joblib.load('best_model.pkl')  
+        self.scaler = joblib.load('scaler.pkl')  
+        self.encoder = joblib.load('encoder.pkl')  
 
     def run(self):
         # Sidebar for navigation
@@ -23,7 +23,7 @@ class AttritionDeskApp:
     def show_home(self):
         # Home page
         st.title("Welcome to the AttritionDesk App!")
-        st.image("App/images/homepage.png", use_container_width=True)
+        st.image("images/homepage.png", use_container_width=True)
         st.subheader("About This App")
         st.write("""This application is designed to predict whether an employee is likely to stay or leave the company based on various input features. 
                     By analyzing key factors such as job satisfaction, last evaluation score, number of projects, average monthly hours worked, 
@@ -45,12 +45,12 @@ class AttritionDeskApp:
                     4. **Results**: Finally, the app will display the prediction result, indicating whether the employee is likely to stay or leave. 
                     This information can help HR departments and managers make informed decisions regarding employee engagement and retention strategies.
                 """)
-        st.image("App/images/get-started-image.jpg", use_container_width=True)
+        st.image("images/get-started-image.jpg", use_container_width=True)
 
     def show_prediction(self):
         # Prediction page
         st.title("Make a Prediction")
-        st.image("App/images/leave-or-stay.png", use_container_width=True)
+        st.image("images/leave-or-stay.png", use_container_width=True)
         st.subheader("Please enter the following details about the employee:")
 
         # Input fields with descriptions
@@ -92,10 +92,10 @@ class AttritionDeskApp:
             st.subheader("Prediction Result:")
             if prediction[0] == 1:
                 st.error("The employee is likely to leave.")
-                st.image("App/images/leave.jpg", use_container_width=True)
+                st.image("images/leave.jpg", use_container_width=True)
             else:
                 st.success("The employee is likely to stay.")
-                st.image("App/images/stay.png", use_container_width=True)
+                st.image("images/stay.png", use_container_width=True)
 
 # Run the app
 if __name__ == "__main__":
