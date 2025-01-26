@@ -2,14 +2,11 @@ import streamlit as st
 import joblib
 import numpy as np
 import pandas as pd
-import os
 import neptune
 from datetime import datetime
-from dotenv import load_dotenv
 
-# Load the API token from the .env file
-load_dotenv()
-api_token = os.getenv('NEPTUNE_API_TOKEN')
+# Load the API token from Streamlit secrets
+api_token = st.secrets["NEPTUNE_API_TOKEN"]
 
 class AttritionDeskApp:
     def __init__(self):
