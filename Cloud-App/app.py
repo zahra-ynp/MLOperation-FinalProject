@@ -86,12 +86,25 @@ class AttritionDeskApp:
                 columns=['sys/tags', 'prediction/output', 'prediction/input_features', 'prediction/risk_factors', 'metadata']
             ).to_pandas()
             
+            # Debug: mostra le colonne disponibili
+            st.write("Debug - Available columns:", runs.columns.tolist())
+            
             # Filtra solo le run di predizione
             prediction_runs = runs[runs['sys/tags'].apply(lambda x: 'prediction' in x)]
             recent_predictions = prediction_runs.head(100)
 
-            # Debug: print della struttura dei dati
-            st.write("Debug - First run data structure:", recent_predictions.iloc[0] if len(recent_predictions) > 0 else "No predictions")
+            # Debug: mostra il numero di predizioni trovate
+            st.write("Debug - Number of predictions found:", len(recent_predictions))
+            
+            # Debug: mostra i primi dati raw completi
+            st.write("Debug - First 3 raw predictions:")
+            for idx, run in recent_predictions.head(3).iterrows():
+                st.write(f"\nPrediction {idx}:")
+                st.write("Tags:", run['sys/tags'])
+                st.write("Output:", run['prediction/output'])
+                st.write("Input Features:", run['prediction/input_features'])
+                st.write("Risk Factors:", run['prediction/risk_factors'])
+                st.write("Metadata:", run['metadata'])
 
             # Inizializza statistiche
             stats = {
@@ -107,18 +120,31 @@ class AttritionDeskApp:
             }
 
             valid_predictions = 0
-            for _, run in recent_predictions.iterrows():
+            for idx, run in recent_predictions.iterrows():
                 try:
+                    # Debug: mostra i dati che stiamo processando
+                    st.write(f"\nProcessing prediction {idx}:")
+                    
                     # Estrai i dati dalla run
                     output_data = run['prediction/output']
                     input_features = run['prediction/input_features']
                     risk_factors = run['prediction/risk_factors']
                     metadata = run['metadata']
                     
+                    # Debug: mostra i dati estratti
+                    st.write("Output data:", output_data)
+                    st.write("Input features:", input_features)
+                    st.write("Risk factors:", risk_factors)
+                    
                     if isinstance(output_data, dict):
                         # Estrai i dati di output
                         prob_leave = output_data.get('probability_leave', 0.0)
                         prediction_time = output_data.get('prediction_time', 0.0)
+                        
+                        # Debug: mostra i valori estratti
+                        st.write("Extracted values:")
+                        st.write(f"- Probability leave: {prob_leave}")
+                        st.write(f"- Prediction time: {prediction_time}")
                         
                         # Aggiorna statistiche per dipartimento
                         if isinstance(input_features, dict):
@@ -140,16 +166,20 @@ class AttritionDeskApp:
                         valid_predictions += 1
 
                 except Exception as e:
-                    st.warning(f"Error processing run: {str(e)}")
+                    st.warning(f"Error processing run {idx}: {str(e)}")
                     continue
+
+            # Debug: mostra statistiche finali prima della media
+            st.write("\nPre-average statistics:", stats)
+            st.write("Valid predictions:", valid_predictions)
 
             # Calcola medie finali
             if valid_predictions > 0:
                 stats['average_prediction_time'] /= valid_predictions
                 stats['leave_probability'] /= valid_predictions
 
-            # Debug: print delle statistiche calcolate
-            st.write("Debug - Calculated statistics:", stats)
+            # Debug: mostra statistiche finali
+            st.write("\nFinal statistics:", stats)
 
             return stats
 
