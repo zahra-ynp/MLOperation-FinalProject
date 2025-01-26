@@ -83,7 +83,7 @@ class AttritionDeskApp:
 
             # Recupera le ultime 100 predizioni
             runs = project.fetch_runs_table(
-                columns=['sys/tags', 'prediction', 'metadata']
+                columns=['sys/tags', 'prediction/output', 'prediction/input_features', 'prediction/risk_factors', 'metadata']
             ).to_pandas()
             
             # Filtra solo le run di predizione
@@ -110,26 +110,29 @@ class AttritionDeskApp:
             for _, run in recent_predictions.iterrows():
                 try:
                     # Estrai i dati dalla run
-                    prediction_data = run['prediction']
+                    output_data = run['prediction/output']
+                    input_features = run['prediction/input_features']
+                    risk_factors = run['prediction/risk_factors']
                     metadata = run['metadata']
                     
-                    if isinstance(prediction_data, dict) and isinstance(metadata, dict):
-                        # Aggiorna statistiche per dipartimento
-                        dept = metadata.get('department', 'unknown')
-                        stats['departments'][dept] = stats['departments'].get(dept, 0) + 1
-                        
+                    if isinstance(output_data, dict):
                         # Estrai i dati di output
-                        output_data = prediction_data.get('output', {})
                         prob_leave = output_data.get('probability_leave', 0.0)
                         prediction_time = output_data.get('prediction_time', 0.0)
                         
+                        # Aggiorna statistiche per dipartimento
+                        if isinstance(input_features, dict):
+                            dept = input_features.get('sales', 'unknown')
+                            stats['departments'][dept] = stats['departments'].get(dept, 0) + 1
+                        
                         # Aggiorna statistiche di rischio
-                        if prob_leave > 0.7:
-                            stats['risk_levels']['high_risk'] += 1
-                        elif prob_leave > 0.3:
-                            stats['risk_levels']['medium_risk'] += 1
-                        else:
-                            stats['risk_levels']['low_risk'] += 1
+                        if isinstance(risk_factors, dict):
+                            if risk_factors.get('high_risk', False):
+                                stats['risk_levels']['high_risk'] += 1
+                            elif prob_leave > 0.3:  # medium risk
+                                stats['risk_levels']['medium_risk'] += 1
+                            else:
+                                stats['risk_levels']['low_risk'] += 1
                         
                         # Aggiorna medie
                         stats['average_prediction_time'] += prediction_time
