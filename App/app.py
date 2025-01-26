@@ -74,39 +74,36 @@ class AttritionDeskApp:
             run.stop()
 
     def get_statistics(self):
-        """Recupera statistiche aggregate da Neptune"""
+        """Retrieve aggregate statistics from Neptune"""
         try:
             project = neptune.init_project(
                 project='440MI/AttritionDeskApp',
                 api_token=api_token
             )
 
-            # Recupera le ultime 100 predizioni
+            # Retrieve the last 100 predictions
             runs = project.fetch_runs_table(
-                columns=['sys/tags', 'prediction/output', 'prediction/input_features', 'prediction/risk_factors', 'metadata']
+                columns=['sys/tags', 'prediction']  # Retrieve the entire prediction object
             ).to_pandas()
             
-            # Debug: mostra le colonne disponibili
+            # Debug: show available columns
             st.write("Debug - Available columns:", runs.columns.tolist())
             
-            # Filtra solo le run di predizione
+            # Filter only prediction runs
             prediction_runs = runs[runs['sys/tags'].apply(lambda x: 'prediction' in x)]
             recent_predictions = prediction_runs.head(100)
 
-            # Debug: mostra il numero di predizioni trovate
+            # Debug: show the number of predictions found
             st.write("Debug - Number of predictions found:", len(recent_predictions))
             
-            # Debug: mostra i primi dati raw completi
+            # Debug: show the first complete raw data
             st.write("Debug - First 3 raw predictions:")
             for idx, run in recent_predictions.head(3).iterrows():
                 st.write(f"\nPrediction {idx}:")
                 st.write("Tags:", run['sys/tags'])
-                st.write("Output:", run['prediction/output'])
-                st.write("Input Features:", run['prediction/input_features'])
-                st.write("Risk Factors:", run['prediction/risk_factors'])
-                st.write("Metadata:", run['metadata'])
+                st.write("Full prediction data:", run['prediction'])
 
-            # Inizializza statistiche
+            # Initialize statistics
             stats = {
                 "total_predictions": len(recent_predictions),
                 "departments": {},
@@ -122,63 +119,69 @@ class AttritionDeskApp:
             valid_predictions = 0
             for idx, run in recent_predictions.iterrows():
                 try:
-                    # Debug: mostra i dati che stiamo processando
+                    # Debug: show the data we are processing
                     st.write(f"\nProcessing prediction {idx}:")
                     
-                    # Estrai i dati dalla run
-                    output_data = run['prediction/output']
-                    input_features = run['prediction/input_features']
-                    risk_factors = run['prediction/risk_factors']
-                    metadata = run['metadata']
+                    # Extract data from the run
+                    prediction_data = run['prediction']
                     
-                    # Debug: mostra i dati estratti
-                    st.write("Output data:", output_data)
-                    st.write("Input features:", input_features)
-                    st.write("Risk factors:", risk_factors)
+                    # Debug: show raw data
+                    st.write("Raw prediction data:", prediction_data)
                     
-                    if isinstance(output_data, dict):
-                        # Estrai i dati di output
-                        prob_leave = output_data.get('probability_leave', 0.0)
-                        prediction_time = output_data.get('prediction_time', 0.0)
+                    if isinstance(prediction_data, dict):
+                        output_data = prediction_data.get('output', {})
+                        input_features = prediction_data.get('input_features', {})
+                        risk_factors = prediction_data.get('risk_factors', {})
                         
-                        # Debug: mostra i valori estratti
-                        st.write("Extracted values:")
-                        st.write(f"- Probability leave: {prob_leave}")
-                        st.write(f"- Prediction time: {prediction_time}")
+                        # Debug: show extracted data
+                        st.write("Extracted data:")
+                        st.write("- Output:", output_data)
+                        st.write("- Input:", input_features)
+                        st.write("- Risk factors:", risk_factors)
                         
-                        # Aggiorna statistiche per dipartimento
-                        if isinstance(input_features, dict):
-                            dept = input_features.get('sales', 'unknown')
-                            stats['departments'][dept] = stats['departments'].get(dept, 0) + 1
-                        
-                        # Aggiorna statistiche di rischio
-                        if isinstance(risk_factors, dict):
-                            if risk_factors.get('high_risk', False):
-                                stats['risk_levels']['high_risk'] += 1
-                            elif prob_leave > 0.3:  # medium risk
-                                stats['risk_levels']['medium_risk'] += 1
-                            else:
-                                stats['risk_levels']['low_risk'] += 1
-                        
-                        # Aggiorna medie
-                        stats['average_prediction_time'] += prediction_time
-                        stats['leave_probability'] += prob_leave
-                        valid_predictions += 1
+                        if isinstance(output_data, dict):
+                            # Extract output data
+                            prob_leave = output_data.get('probability_leave', 0.0)
+                            prediction_time = output_data.get('prediction_time', 0.0)
+                            
+                            # Debug: show extracted values
+                            st.write("Extracted values:")
+                            st.write(f"- Probability leave: {prob_leave}")
+                            st.write(f"- Prediction time: {prediction_time}")
+                            
+                            # Update statistics by department
+                            if isinstance(input_features, dict):
+                                dept = input_features.get('sales', 'unknown')
+                                stats['departments'][dept] = stats['departments'].get(dept, 0) + 1
+                            
+                            # Update risk statistics
+                            if isinstance(risk_factors, dict):
+                                if risk_factors.get('high_risk', False):
+                                    stats['risk_levels']['high_risk'] += 1
+                                elif prob_leave > 0.3:  # medium risk
+                                    stats['risk_levels']['medium_risk'] += 1
+                                else:
+                                    stats['risk_levels']['low_risk'] += 1
+                            
+                            # Update averages
+                            stats['average_prediction_time'] += prediction_time
+                            stats['leave_probability'] += prob_leave
+                            valid_predictions += 1
 
                 except Exception as e:
                     st.warning(f"Error processing run {idx}: {str(e)}")
                     continue
 
-            # Debug: mostra statistiche finali prima della media
+            # Debug: show final statistics before averaging
             st.write("\nPre-average statistics:", stats)
             st.write("Valid predictions:", valid_predictions)
 
-            # Calcola medie finali
+            # Calculate final averages
             if valid_predictions > 0:
                 stats['average_prediction_time'] /= valid_predictions
                 stats['leave_probability'] /= valid_predictions
 
-            # Debug: mostra statistiche finali
+            # Debug: show final statistics
             st.write("\nFinal statistics:", stats)
 
             return stats
@@ -190,7 +193,7 @@ class AttritionDeskApp:
             project.stop()
 
     def show_statistics(self):
-        """Visualizza statistiche in Streamlit"""
+        """Display statistics in Streamlit"""
         st.title("Prediction Statistics")
         
         stats = self.get_statistics()
