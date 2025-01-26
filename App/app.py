@@ -16,7 +16,7 @@ class AttritionDeskApp:
         self.encoder = joblib.load('Cloud-App/encoder.pkl')
         
         # Initialize Neptune run for production monitoring
-        self.run = neptune.init_run(
+        self.neptune_run = neptune.init_run(
             project='440MI/AttritionDeskApp',
             api_token=api_token,
             tags=["production", "model-serving"],
@@ -24,8 +24,8 @@ class AttritionDeskApp:
         )
         
         # Log model metadata
-        self.run["model/type"] = type(self.model).__name__
-        self.run["model/features"] = [
+        self.neptune_run["model/type"] = type(self.model).__name__
+        self.neptune_run["model/features"] = [
             "satisfaction_level", "last_evaluation", "number_project",
             "average_montly_hours", "time_spent_company", "work_accident",
             "promotion_last_5years", "sales", "salary"
@@ -36,7 +36,7 @@ class AttritionDeskApp:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
         # Log prediction details
-        self.run[f"predictions/{timestamp}/input"] = {
+        self.neptune_run[f"predictions/{timestamp}/input"] = {
             "satisfaction_level": input_data["satisfaction_level"],
             "last_evaluation": input_data["last_evaluation"],
             "number_project": input_data["number_project"],
@@ -47,21 +47,21 @@ class AttritionDeskApp:
             "sales": input_data["sales"],
             "salary": input_data["salary"]
         }
-        self.run[f"predictions/{timestamp}/output"] = {
+        self.neptune_run[f"predictions/{timestamp}/output"] = {
             "prediction": int(prediction[0]),
             "probability_leave": float(probabilities[1]),
             "probability_stay": float(probabilities[0])
         }
         
         # Update prediction statistics
-        self.run["monitoring/predictions_count"].log(1)
-        self.run["monitoring/predictions_by_department"][input_data["sales"]].log(1)
-        self.run["monitoring/predictions_by_result"][f"{'leave' if prediction[0] == 1 else 'stay'}"].log(1)
+        self.neptune_run["monitoring/predictions_count"].log(1)
+        self.neptune_run["monitoring/predictions_by_department"][input_data["sales"]].log(1)
+        self.neptune_run["monitoring/predictions_by_result"][f"{'leave' if prediction[0] == 1 else 'stay'}"].log(1)
         
         # Log confidence distribution
-        self.run["monitoring/confidence_distribution"].log(float(max(probabilities)))
+        self.neptune_run["monitoring/confidence_distribution"].log(float(max(probabilities)))
 
-    def run(self):
+    def start_app(self):
         try:
             # Sidebar for navigation
             st.sidebar.title("Navigation")
@@ -74,7 +74,7 @@ class AttritionDeskApp:
                 
         except Exception as e:
             # Log any errors that occur
-            self.run["monitoring/errors"].log(str(e))
+            self.neptune_run["monitoring/errors"].log(str(e))
             raise e
 
     def show_home(self):
@@ -169,15 +169,15 @@ class AttritionDeskApp:
                     st.image("Cloud-App/images/stay.png", use_container_width=True)
 
             except Exception as e:
-                self.run["monitoring/prediction_errors"].log(str(e))
+                self.neptune_run["monitoring/prediction_errors"].log(str(e))
                 st.error(f"An error occurred: {str(e)}")
 
     def __del__(self):
         # Ensure Neptune run is stopped when the app is closed
-        if hasattr(self, 'run'):
-            self.run.stop()
+        if hasattr(self, 'neptune_run'):
+            self.neptune_run.stop()
 
 # Run the app
 if __name__ == "__main__":
     app = AttritionDeskApp()
-    app.run()
+    app.start_app()
