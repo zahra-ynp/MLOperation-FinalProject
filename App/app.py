@@ -81,9 +81,9 @@ class AttritionDeskApp:
                 api_token=api_token
             )
 
-            # Retrieve predictions using NQL query
+            # Retrieve predictions using correct NQL syntax
             runs = project.fetch_runs_table(
-                query='`sys/tags` CONTAINS "prediction"',  # Filter only prediction runs
+                query='`sys/tags`:stringSet CONTAINS "prediction"',  # Correct NQL syntax
                 columns=[
                     'sys/id',  
                     'prediction/output/prediction',
