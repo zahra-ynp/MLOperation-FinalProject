@@ -81,31 +81,26 @@ class AttritionDeskApp:
                 api_token=api_token
             )
 
-            # Retrieve the last 100 predictions
+            # Retrieve predictions using NQL query
             runs = project.fetch_runs_table(
-                columns=['sys/tags', 'prediction']  # Retrieve the entire prediction object
+                query='`sys/tags` CONTAINS "prediction"',  # Filter only prediction runs
+                columns=[
+                    'sys/id',  
+                    'prediction/output/prediction',
+                    'prediction/output/probability_leave',
+                    'prediction/output/probability_stay',
+                    'prediction/output/prediction_time',
+                    'prediction/input_features/sales',
+                    'prediction/risk_factors/high_risk'
+                ]
             ).to_pandas()
-            
-            # Debug: show available columns
-            st.write("Debug - Available columns:", runs.columns.tolist())
-            
-            # Filter only prediction runs
-            prediction_runs = runs[runs['sys/tags'].apply(lambda x: 'prediction' in x)]
-            recent_predictions = prediction_runs.head(100)
 
-            # Debug: show the number of predictions found
-            st.write("Debug - Number of predictions found:", len(recent_predictions))
-            
-            # Debug: show the first complete raw data
-            st.write("Debug - First 3 raw predictions:")
-            for idx, run in recent_predictions.head(3).iterrows():
-                st.write(f"\nPrediction {idx}:")
-                st.write("Tags:", run['sys/tags'])
-                st.write("Full prediction data:", run['prediction'])
+            # Debug: show retrieved data
+            st.write("Debug - Retrieved data structure:", runs.head())
 
             # Initialize statistics
             stats = {
-                "total_predictions": len(recent_predictions),
+                "total_predictions": len(runs),
                 "departments": {},
                 "risk_levels": {
                     "high_risk": 0,
@@ -117,72 +112,42 @@ class AttritionDeskApp:
             }
 
             valid_predictions = 0
-            for idx, run in recent_predictions.iterrows():
+            for _, run in runs.iterrows():
                 try:
-                    # Debug: show the data we are processing
-                    st.write(f"\nProcessing prediction {idx}:")
-                    
-                    # Extract data from the run
-                    prediction_data = run['prediction']
-                    
-                    # Debug: show raw data
-                    st.write("Raw prediction data:", prediction_data)
-                    
-                    if isinstance(prediction_data, dict):
-                        output_data = prediction_data.get('output', {})
-                        input_features = prediction_data.get('input_features', {})
-                        risk_factors = prediction_data.get('risk_factors', {})
-                        
-                        # Debug: show extracted data
-                        st.write("Extracted data:")
-                        st.write("- Output:", output_data)
-                        st.write("- Input:", input_features)
-                        st.write("- Risk factors:", risk_factors)
-                        
-                        if isinstance(output_data, dict):
-                            # Extract output data
-                            prob_leave = output_data.get('probability_leave', 0.0)
-                            prediction_time = output_data.get('prediction_time', 0.0)
-                            
-                            # Debug: show extracted values
-                            st.write("Extracted values:")
-                            st.write(f"- Probability leave: {prob_leave}")
-                            st.write(f"- Prediction time: {prediction_time}")
-                            
-                            # Update statistics by department
-                            if isinstance(input_features, dict):
-                                dept = input_features.get('sales', 'unknown')
-                                stats['departments'][dept] = stats['departments'].get(dept, 0) + 1
-                            
-                            # Update risk statistics
-                            if isinstance(risk_factors, dict):
-                                if risk_factors.get('high_risk', False):
-                                    stats['risk_levels']['high_risk'] += 1
-                                elif prob_leave > 0.3:  # medium risk
-                                    stats['risk_levels']['medium_risk'] += 1
-                                else:
-                                    stats['risk_levels']['low_risk'] += 1
-                            
-                            # Update averages
-                            stats['average_prediction_time'] += prediction_time
-                            stats['leave_probability'] += prob_leave
-                            valid_predictions += 1
+                    # Get values directly from columns
+                    prob_leave = run['prediction/output/probability_leave']
+                    prediction_time = run['prediction/output/prediction_time']
+                    dept = run['prediction/input_features/sales']
+                    high_risk = run['prediction/risk_factors/high_risk']
+
+                    # Update department statistics
+                    if pd.notna(dept):
+                        stats['departments'][dept] = stats['departments'].get(dept, 0) + 1
+
+                    # Update risk statistics
+                    if pd.notna(high_risk) and high_risk:
+                        stats['risk_levels']['high_risk'] += 1
+                    elif pd.notna(prob_leave):
+                        if prob_leave > 0.3:
+                            stats['risk_levels']['medium_risk'] += 1
+                        else:
+                            stats['risk_levels']['low_risk'] += 1
+
+                    # Update averages
+                    if pd.notna(prediction_time):
+                        stats['average_prediction_time'] += prediction_time
+                    if pd.notna(prob_leave):
+                        stats['leave_probability'] += prob_leave
+                        valid_predictions += 1
 
                 except Exception as e:
-                    st.warning(f"Error processing run {idx}: {str(e)}")
+                    st.warning(f"Error processing run: {str(e)}")
                     continue
-
-            # Debug: show final statistics before averaging
-            st.write("\nPre-average statistics:", stats)
-            st.write("Valid predictions:", valid_predictions)
 
             # Calculate final averages
             if valid_predictions > 0:
                 stats['average_prediction_time'] /= valid_predictions
                 stats['leave_probability'] /= valid_predictions
-
-            # Debug: show final statistics
-            st.write("\nFinal statistics:", stats)
 
             return stats
 
