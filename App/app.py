@@ -83,11 +83,17 @@ class AttritionDeskApp:
 
             # Recupera le ultime 100 predizioni
             runs = project.fetch_runs_table(
-                columns=['sys/tags', 'prediction', 'metadata']).to_pandas()
+                columns=['sys/tags', 'prediction', 'metadata']
+            ).to_pandas()
+            
+            # Filtra solo le run di predizione
             prediction_runs = runs[runs['sys/tags'].apply(lambda x: 'prediction' in x)]
             recent_predictions = prediction_runs.head(100)
 
-            # Calcola statistiche
+            # Debug: print della struttura dei dati
+            st.write("Debug - First run data structure:", recent_predictions.iloc[0] if len(recent_predictions) > 0 else "No predictions")
+
+            # Inizializza statistiche
             stats = {
                 "total_predictions": len(recent_predictions),
                 "departments": {},
@@ -100,32 +106,47 @@ class AttritionDeskApp:
                 "leave_probability": 0.0
             }
 
+            valid_predictions = 0
             for _, run in recent_predictions.iterrows():
-                if 'prediction' in run and 'metadata' in run:
-                    pred = run['prediction']
-                    meta = run['metadata']
+                try:
+                    # Estrai i dati dalla run
+                    prediction_data = run['prediction']
+                    metadata = run['metadata']
                     
-                    # Aggiorna statistiche per dipartimento
-                    dept = meta.get('department', 'unknown')
-                    stats['departments'][dept] = stats['departments'].get(dept, 0) + 1
-                    
-                    # Aggiorna statistiche di rischio
-                    prob_leave = pred['output']['probability_leave']
-                    if prob_leave > 0.7:
-                        stats['risk_levels']['high_risk'] += 1
-                    elif prob_leave > 0.3:
-                        stats['risk_levels']['medium_risk'] += 1
-                    else:
-                        stats['risk_levels']['low_risk'] += 1
-                    
-                    # Aggiorna medie
-                    stats['average_prediction_time'] += pred['output']['prediction_time']
-                    stats['leave_probability'] += prob_leave
+                    if isinstance(prediction_data, dict) and isinstance(metadata, dict):
+                        # Aggiorna statistiche per dipartimento
+                        dept = metadata.get('department', 'unknown')
+                        stats['departments'][dept] = stats['departments'].get(dept, 0) + 1
+                        
+                        # Estrai i dati di output
+                        output_data = prediction_data.get('output', {})
+                        prob_leave = output_data.get('probability_leave', 0.0)
+                        prediction_time = output_data.get('prediction_time', 0.0)
+                        
+                        # Aggiorna statistiche di rischio
+                        if prob_leave > 0.7:
+                            stats['risk_levels']['high_risk'] += 1
+                        elif prob_leave > 0.3:
+                            stats['risk_levels']['medium_risk'] += 1
+                        else:
+                            stats['risk_levels']['low_risk'] += 1
+                        
+                        # Aggiorna medie
+                        stats['average_prediction_time'] += prediction_time
+                        stats['leave_probability'] += prob_leave
+                        valid_predictions += 1
+
+                except Exception as e:
+                    st.warning(f"Error processing run: {str(e)}")
+                    continue
 
             # Calcola medie finali
-            if stats['total_predictions'] > 0:
-                stats['average_prediction_time'] /= stats['total_predictions']
-                stats['leave_probability'] /= stats['total_predictions']
+            if valid_predictions > 0:
+                stats['average_prediction_time'] /= valid_predictions
+                stats['leave_probability'] /= valid_predictions
+
+            # Debug: print delle statistiche calcolate
+            st.write("Debug - Calculated statistics:", stats)
 
             return stats
 
