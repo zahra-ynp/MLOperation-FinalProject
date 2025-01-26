@@ -26,55 +26,94 @@ class AttritionDeskApp:
         )
 
         try:
-            # Log model metadata
-            run["model/type"] = type(self.model).__name__
-            run["model/features"] = [
-                "satisfaction_level", "last_evaluation", "number_project",
-                "average_montly_hours", "time_spent_company", "work_accident",
-                "promotion_last_5years", "sales", "salary"
-            ]
+            # Log system info and timestamp
+            run["metadata/timestamp"] = datetime.now().isoformat()
+            run["metadata/model_version"] = "1.0.0"  # Versione del modello
+            
+            # Log input statistics
+            run["monitoring/input_statistics/satisfaction_distribution"].log(float(input_data["satisfaction_level"]))
+            run["monitoring/input_statistics/hours_distribution"].log(float(input_data["average_montly_hours"]))
+            run["monitoring/input_statistics/projects_distribution"].log(int(input_data["number_project"]))
+            
+            # Track department distribution
+            run["monitoring/department_stats/total_queries_by_dept"][input_data["sales"]].log(1)
+            run["monitoring/salary_stats/total_queries_by_salary"][input_data["salary"]].log(1)
 
             # Make prediction
             numerical_features_scaled = self.scaler.transform(numerical_features)
             categorical_features_encoded = self.encoder.transform(categorical_features_df)
             input_data_final = np.hstack((numerical_features_scaled, binary_features, categorical_features_encoded))
             
+            # Track prediction timing
+            start_time = datetime.now()
             prediction = self.model.predict(input_data_final)
             prediction_prob = self.model.predict_proba(input_data_final)[0]
+            prediction_time = (datetime.now() - start_time).total_seconds()
+            
+            run["monitoring/performance/prediction_time"].log(prediction_time)
 
-            # Log prediction details
+            # Log detailed prediction info
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            run[f"predictions/{timestamp}/input"] = {
-                "satisfaction_level": input_data["satisfaction_level"],
-                "last_evaluation": input_data["last_evaluation"],
-                "number_project": input_data["number_project"],
-                "average_montly_hours": input_data["average_montly_hours"],
-                "time_spent_company": input_data["time_spent_company"],
-                "work_accident": input_data["work_accident"],
-                "promotion_last_5years": input_data["promotion_last_5years"],
-                "sales": input_data["sales"],
-                "salary": input_data["salary"]
-            }
-            run[f"predictions/{timestamp}/output"] = {
-                "prediction": int(prediction[0]),
-                "probability_leave": float(prediction_prob[1]),
-                "probability_stay": float(prediction_prob[0])
+            run[f"predictions/{timestamp}/details"] = {
+                "input": {
+                    "satisfaction_level": input_data["satisfaction_level"],
+                    "last_evaluation": input_data["last_evaluation"],
+                    "number_project": input_data["number_project"],
+                    "average_montly_hours": input_data["average_montly_hours"],
+                    "time_spent_company": input_data["time_spent_company"],
+                    "work_accident": input_data["work_accident"],
+                    "promotion_last_5years": input_data["promotion_last_5years"],
+                    "sales": input_data["sales"],
+                    "salary": input_data["salary"]
+                },
+                "output": {
+                    "prediction": int(prediction[0]),
+                    "probability_leave": float(prediction_prob[1]),
+                    "probability_stay": float(prediction_prob[0]),
+                    "confidence": float(max(prediction_prob)),
+                    "prediction_time": prediction_time
+                }
             }
             
-            # Update prediction statistics
-            run["monitoring/predictions_count"].log(1)
-            run["monitoring/predictions_by_department"][input_data["sales"]].log(1)
-            run["monitoring/predictions_by_result"][f"{'leave' if prediction[0] == 1 else 'stay'}"].log(1)
-            run["monitoring/confidence_distribution"].log(float(max(prediction_prob)))
+            # Track prediction patterns
+            run["monitoring/predictions/high_risk_predictions"].log(1 if prediction_prob[1] > 0.7 else 0)
+            run["monitoring/predictions/low_satisfaction_leaves"].log(
+                1 if prediction[0] == 1 and input_data["satisfaction_level"] < 0.3 else 0
+            )
+            run["monitoring/predictions/overworked_leaves"].log(
+                1 if prediction[0] == 1 and input_data["average_montly_hours"] > 250 else 0
+            )
+
+            # Track confidence levels
+            run["monitoring/confidence/high_confidence"].log(1 if max(prediction_prob) > 0.8 else 0)
+            run["monitoring/confidence/low_confidence"].log(1 if max(prediction_prob) < 0.6 else 0)
+            
+            # Track feature combinations
+            if prediction[0] == 1:  # Se il dipendente è previsto in uscita
+                run["monitoring/risk_factors/high_hours_low_satisfaction"].log(
+                    1 if input_data["average_montly_hours"] > 200 and input_data["satisfaction_level"] < 0.5 else 0
+                )
+                run["monitoring/risk_factors/no_promotion_long_tenure"].log(
+                    1 if input_data["promotion_last_5years"] == 0 and input_data["time_spent_company"] > 5 else 0
+                )
+
+            # Update cumulative statistics
+            run["monitoring/statistics/total_predictions"].log(1)
+            run["monitoring/statistics/average_confidence"].log(float(max(prediction_prob)))
+            run["monitoring/statistics/leave_predictions"].log(1 if prediction[0] == 1 else 0)
+            run["monitoring/statistics/stay_predictions"].log(1 if prediction[0] == 0 else 0)
 
             return prediction, prediction_prob
 
         except Exception as e:
-            run["monitoring/prediction_errors"].log(str(e))
+            run["monitoring/errors/prediction_errors"].log({
+                "error_type": type(e).__name__,
+                "error_message": str(e),
+                "timestamp": datetime.now().isoformat()
+            })
             raise e
         
         finally:
-            # Always stop the run
             run.stop()
 
     def start_app(self):
