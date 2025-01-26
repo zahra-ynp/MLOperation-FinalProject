@@ -16,116 +16,164 @@ class AttritionDeskApp:
         self.encoder = joblib.load('Cloud-App/encoder.pkl')
 
     def make_prediction(self, input_data, numerical_features, binary_features, categorical_features_df):
-        """Handle prediction and Neptune logging in one place"""
-        # Initialize Neptune only when making a prediction
+        """Handle single prediction and Neptune logging"""
         run = neptune.init_run(
             project='440MI/AttritionDeskApp',
             api_token=api_token,
-            tags=["production", "model-serving"],
-            name="AttritionDesk-Production"
+            tags=["production", "prediction"],
+            name=f"Prediction-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
         )
 
         try:
-            # Log system info and timestamp
-            run["metadata/timestamp"] = datetime.now().isoformat()
-            run["metadata/model_version"] = "1.0.0"  # Versione del modello
-            
-            # Log input statistics
-            run["monitoring/input_statistics/satisfaction_distribution"].log(float(input_data["satisfaction_level"]))
-            run["monitoring/input_statistics/hours_distribution"].log(float(input_data["average_montly_hours"]))
-            run["monitoring/input_statistics/projects_distribution"].log(int(input_data["number_project"]))
-            
-            # Track department distribution
-            run["monitoring/department_stats/total_queries_by_dept"][input_data["sales"]].log(1)
-            run["monitoring/salary_stats/total_queries_by_salary"][input_data["salary"]].log(1)
+            # Log single prediction metadata
+            run["metadata"] = {
+                "timestamp": datetime.now().isoformat(),
+                "model_version": "1.0.0",
+                "department": input_data["sales"],
+                "salary_level": input_data["salary"]
+            }
 
-            # Make prediction
+            # Make prediction with timing
+            start_time = datetime.now()
             numerical_features_scaled = self.scaler.transform(numerical_features)
             categorical_features_encoded = self.encoder.transform(categorical_features_df)
             input_data_final = np.hstack((numerical_features_scaled, binary_features, categorical_features_encoded))
             
-            # Track prediction timing
-            start_time = datetime.now()
             prediction = self.model.predict(input_data_final)
             prediction_prob = self.model.predict_proba(input_data_final)[0]
             prediction_time = (datetime.now() - start_time).total_seconds()
-            
-            run["monitoring/performance/prediction_time"].log(prediction_time)
 
-            # Log detailed prediction info
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            run[f"predictions/{timestamp}/details"] = {
-                "input": {
-                    "satisfaction_level": input_data["satisfaction_level"],
-                    "last_evaluation": input_data["last_evaluation"],
-                    "number_project": input_data["number_project"],
-                    "average_montly_hours": input_data["average_montly_hours"],
-                    "time_spent_company": input_data["time_spent_company"],
-                    "work_accident": input_data["work_accident"],
-                    "promotion_last_5years": input_data["promotion_last_5years"],
-                    "sales": input_data["sales"],
-                    "salary": input_data["salary"]
-                },
+            # Log prediction details
+            run["prediction"] = {
+                "input_features": input_data,
                 "output": {
                     "prediction": int(prediction[0]),
                     "probability_leave": float(prediction_prob[1]),
                     "probability_stay": float(prediction_prob[0]),
-                    "confidence": float(max(prediction_prob)),
                     "prediction_time": prediction_time
+                },
+                "risk_factors": {
+                    "high_risk": prediction_prob[1] > 0.7,
+                    "low_satisfaction": input_data["satisfaction_level"] < 0.3,
+                    "overworked": input_data["average_montly_hours"] > 250,
+                    "no_recent_promotion": input_data["promotion_last_5years"] == 0,
+                    "long_tenure": input_data["time_spent_company"] > 5
                 }
             }
-            
-            # Track prediction patterns
-            run["monitoring/predictions/high_risk_predictions"].log(1 if prediction_prob[1] > 0.7 else 0)
-            run["monitoring/predictions/low_satisfaction_leaves"].log(
-                1 if prediction[0] == 1 and input_data["satisfaction_level"] < 0.3 else 0
-            )
-            run["monitoring/predictions/overworked_leaves"].log(
-                1 if prediction[0] == 1 and input_data["average_montly_hours"] > 250 else 0
-            )
-
-            # Track confidence levels
-            run["monitoring/confidence/high_confidence"].log(1 if max(prediction_prob) > 0.8 else 0)
-            run["monitoring/confidence/low_confidence"].log(1 if max(prediction_prob) < 0.6 else 0)
-            
-            # Track feature combinations
-            if prediction[0] == 1:  # Se il dipendente è previsto in uscita
-                run["monitoring/risk_factors/high_hours_low_satisfaction"].log(
-                    1 if input_data["average_montly_hours"] > 200 and input_data["satisfaction_level"] < 0.5 else 0
-                )
-                run["monitoring/risk_factors/no_promotion_long_tenure"].log(
-                    1 if input_data["promotion_last_5years"] == 0 and input_data["time_spent_company"] > 5 else 0
-                )
-
-            # Update cumulative statistics
-            run["monitoring/statistics/total_predictions"].log(1)
-            run["monitoring/statistics/average_confidence"].log(float(max(prediction_prob)))
-            run["monitoring/statistics/leave_predictions"].log(1 if prediction[0] == 1 else 0)
-            run["monitoring/statistics/stay_predictions"].log(1 if prediction[0] == 0 else 0)
 
             return prediction, prediction_prob
 
         except Exception as e:
-            run["monitoring/errors/prediction_errors"].log({
-                "error_type": type(e).__name__,
-                "error_message": str(e),
+            run["error"] = {
+                "type": type(e).__name__,
+                "message": str(e),
                 "timestamp": datetime.now().isoformat()
-            })
+            }
             raise e
-        
         finally:
             run.stop()
+
+    def get_statistics(self):
+        """Recupera statistiche aggregate da Neptune"""
+        try:
+            project = neptune.init_project(
+                project='440MI/AttritionDeskApp',
+                api_token=api_token
+            )
+
+            # Recupera le ultime 100 predizioni
+            runs = project.fetch_runs_table(
+                columns=['sys/tags', 'prediction', 'metadata']).to_pandas()
+            prediction_runs = runs[runs['sys/tags'].apply(lambda x: 'prediction' in x)]
+            recent_predictions = prediction_runs.head(100)
+
+            # Calcola statistiche
+            stats = {
+                "total_predictions": len(recent_predictions),
+                "departments": {},
+                "risk_levels": {
+                    "high_risk": 0,
+                    "medium_risk": 0,
+                    "low_risk": 0
+                },
+                "average_prediction_time": 0.0,
+                "leave_probability": 0.0
+            }
+
+            for _, run in recent_predictions.iterrows():
+                if 'prediction' in run and 'metadata' in run:
+                    pred = run['prediction']
+                    meta = run['metadata']
+                    
+                    # Aggiorna statistiche per dipartimento
+                    dept = meta.get('department', 'unknown')
+                    stats['departments'][dept] = stats['departments'].get(dept, 0) + 1
+                    
+                    # Aggiorna statistiche di rischio
+                    prob_leave = pred['output']['probability_leave']
+                    if prob_leave > 0.7:
+                        stats['risk_levels']['high_risk'] += 1
+                    elif prob_leave > 0.3:
+                        stats['risk_levels']['medium_risk'] += 1
+                    else:
+                        stats['risk_levels']['low_risk'] += 1
+                    
+                    # Aggiorna medie
+                    stats['average_prediction_time'] += pred['output']['prediction_time']
+                    stats['leave_probability'] += prob_leave
+
+            # Calcola medie finali
+            if stats['total_predictions'] > 0:
+                stats['average_prediction_time'] /= stats['total_predictions']
+                stats['leave_probability'] /= stats['total_predictions']
+
+            return stats
+
+        except Exception as e:
+            st.error(f"Error fetching statistics: {str(e)}")
+            return None
+        finally:
+            project.stop()
+
+    def show_statistics(self):
+        """Visualizza statistiche in Streamlit"""
+        st.title("Prediction Statistics")
+        
+        stats = self.get_statistics()
+        if stats:
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.metric("Total Predictions", stats['total_predictions'])
+                st.metric("Average Leave Probability", f"{stats['leave_probability']:.2%}")
+                st.metric("Average Prediction Time", f"{stats['average_prediction_time']:.3f}s")
+
+            with col2:
+                st.subheader("Risk Levels")
+                st.write(f"High Risk: {stats['risk_levels']['high_risk']}")
+                st.write(f"Medium Risk: {stats['risk_levels']['medium_risk']}")
+                st.write(f"Low Risk: {stats['risk_levels']['low_risk']}")
+
+            st.subheader("Predictions by Department")
+            dept_df = pd.DataFrame.from_dict(
+                stats['departments'], 
+                orient='index', 
+                columns=['Count']
+            )
+            st.bar_chart(dept_df)
 
     def start_app(self):
         try:
             # Sidebar for navigation
             st.sidebar.title("Navigation")
-            selection = st.sidebar.radio("Go to", ["Home", "Prediction"])
+            selection = st.sidebar.radio("Go to", ["Home", "Prediction", "Statistics"])
 
             if selection == "Home":
                 self.show_home()
             elif selection == "Prediction":
                 self.show_prediction()
+            elif selection == "Statistics":
+                self.show_statistics()
                 
         except Exception as e:
             # Log any errors that occur
