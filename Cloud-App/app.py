@@ -14,9 +14,9 @@ api_token = os.getenv('NEPTUNE_API_TOKEN')
 class AttritionDeskApp:
     def __init__(self):
         # Load the best model, scaler, and encoder pickle files
-        self.model = joblib.load('./best_model.pkl')  
-        self.scaler = joblib.load('./scaler.pkl')  
-        self.encoder = joblib.load('./encoder.pkl')
+        self.model = joblib.load('App/best_model.pkl')  
+        self.scaler = joblib.load('App/scaler.pkl')  
+        self.encoder = joblib.load('App/encoder.pkl')
         
         # Initialize Neptune run for production monitoring
         self.run = neptune.init_run(
