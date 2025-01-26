@@ -44,7 +44,17 @@ class AttritionDeskApp:
 
             # Log prediction details
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            run[f"predictions/{timestamp}/input"] = input_data
+            run[f"predictions/{timestamp}/input"] = {
+                "satisfaction_level": input_data["satisfaction_level"],
+                "last_evaluation": input_data["last_evaluation"],
+                "number_project": input_data["number_project"],
+                "average_montly_hours": input_data["average_montly_hours"],
+                "time_spent_company": input_data["time_spent_company"],
+                "work_accident": input_data["work_accident"],
+                "promotion_last_5years": input_data["promotion_last_5years"],
+                "sales": input_data["sales"],
+                "salary": input_data["salary"]
+            }
             run[f"predictions/{timestamp}/output"] = {
                 "prediction": int(prediction[0]),
                 "probability_leave": float(prediction_prob[1]),
@@ -134,7 +144,7 @@ class AttritionDeskApp:
                     "last_evaluation": last_evaluation,
                     "number_project": number_project,
                     "average_montly_hours": average_montly_hours,
-                    "time_spend_company": time_spent_company,
+                    "time_spent_company": time_spent_company,
                     "work_accident": work_accident,
                     "promotion_last_5years": promotion_last_5years,
                     "sales": sales,
