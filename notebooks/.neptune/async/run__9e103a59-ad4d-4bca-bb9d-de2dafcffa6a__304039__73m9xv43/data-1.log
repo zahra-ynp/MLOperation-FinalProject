@@ -1,0 +1,11 @@
+{"obj": {"type": "AssignString", "path": ["sys", "name"], "value": "Logistic Regression"}, "version": 1, "at": 1737925358.9603605}
+{"obj": {"type": "AssignString", "path": ["sys", "description"], "value": ""}, "version": 2, "at": 1737925358.9606152}
+{"obj": {"type": "AssignString", "path": ["monitoring", "f7e8cf2b", "hostname"], "value": "PC-LUCA56"}, "version": 3, "at": 1737925358.9607315}
+{"obj": {"type": "AssignString", "path": ["sys", "hostname"], "value": "PC-LUCA56"}, "version": 4, "at": 1737925358.9608088}
+{"obj": {"type": "AssignString", "path": ["monitoring", "f7e8cf2b", "pid"], "value": "304039"}, "version": 5, "at": 1737925358.960875}
+{"obj": {"type": "AssignString", "path": ["monitoring", "f7e8cf2b", "tid"], "value": "140086833734720"}, "version": 6, "at": 1737925358.9609356}
+{"obj": {"type": "AddStrings", "path": ["sys", "tags"], "values": ["baseline"]}, "version": 7, "at": 1737925358.961027}
+{"obj": {"type": "AssignBool", "path": ["sys", "failed"], "value": false}, "version": 8, "at": 1737925358.9611}
+{"obj": {"type": "AssignString", "path": ["parameters", "model_type"], "value": "Logistic Regression"}, "version": 9, "at": 1737925358.966618}
+{"obj": {"type": "AssignInt", "path": ["parameters", "random_state"], "value": 42}, "version": 10, "at": 1737925358.9686146}
+{"obj": {"type": "AssignInt", "path": ["parameters", "max_iter"], "value": 1000}, "version": 11, "at": 1737925358.9686992}
