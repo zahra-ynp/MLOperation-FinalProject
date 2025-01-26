@@ -14,57 +14,58 @@ class AttritionDeskApp:
         self.model = joblib.load('Cloud-App/best_model.pkl')  
         self.scaler = joblib.load('Cloud-App/scaler.pkl')  
         self.encoder = joblib.load('Cloud-App/encoder.pkl')
-        self.neptune_run = None
 
-    def init_neptune(self):
-        """Initialize Neptune run only when needed"""
-        if self.neptune_run is None:
-            self.neptune_run = neptune.init_run(
-                project='440MI/AttritionDeskApp',
-                api_token=api_token,
-                tags=["production", "model-serving"],
-                name="AttritionDesk-Production"
-            )
-            
+    def make_prediction(self, input_data, numerical_features, binary_features, categorical_features_df):
+        """Handle prediction and Neptune logging in one place"""
+        # Initialize Neptune only when making a prediction
+        run = neptune.init_run(
+            project='440MI/AttritionDeskApp',
+            api_token=api_token,
+            tags=["production", "model-serving"],
+            name="AttritionDesk-Production"
+        )
+
+        try:
             # Log model metadata
-            self.neptune_run["model/type"] = type(self.model).__name__
-            self.neptune_run["model/features"] = [
+            run["model/type"] = type(self.model).__name__
+            run["model/features"] = [
                 "satisfaction_level", "last_evaluation", "number_project",
                 "average_montly_hours", "time_spent_company", "work_accident",
                 "promotion_last_5years", "sales", "salary"
             ]
 
-    def log_prediction(self, input_data, prediction, probabilities):
-        """Log prediction details to Neptune"""
-        self.init_neptune()  # Initialize Neptune if not already initialized
+            # Make prediction
+            numerical_features_scaled = self.scaler.transform(numerical_features)
+            categorical_features_encoded = self.encoder.transform(categorical_features_df)
+            input_data_final = np.hstack((numerical_features_scaled, binary_features, categorical_features_encoded))
+            
+            prediction = self.model.predict(input_data_final)
+            prediction_prob = self.model.predict_proba(input_data_final)[0]
+
+            # Log prediction details
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            run[f"predictions/{timestamp}/input"] = input_data
+            run[f"predictions/{timestamp}/output"] = {
+                "prediction": int(prediction[0]),
+                "probability_leave": float(prediction_prob[1]),
+                "probability_stay": float(prediction_prob[0])
+            }
+            
+            # Update prediction statistics
+            run["monitoring/predictions_count"].log(1)
+            run["monitoring/predictions_by_department"][input_data["sales"]].log(1)
+            run["monitoring/predictions_by_result"][f"{'leave' if prediction[0] == 1 else 'stay'}"].log(1)
+            run["monitoring/confidence_distribution"].log(float(max(prediction_prob)))
+
+            return prediction, prediction_prob
+
+        except Exception as e:
+            run["monitoring/prediction_errors"].log(str(e))
+            raise e
         
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        # Log prediction details
-        self.neptune_run[f"predictions/{timestamp}/input"] = {
-            "satisfaction_level": input_data["satisfaction_level"],
-            "last_evaluation": input_data["last_evaluation"],
-            "number_project": input_data["number_project"],
-            "average_montly_hours": input_data["average_montly_hours"],
-            "time_spend_company": input_data["time_spent_company"],
-            "work_accident": input_data["work_accident"],
-            "promotion_last_5years": input_data["promotion_last_5years"],
-            "sales": input_data["sales"],
-            "salary": input_data["salary"]
-        }
-        self.neptune_run[f"predictions/{timestamp}/output"] = {
-            "prediction": int(prediction[0]),
-            "probability_leave": float(probabilities[1]),
-            "probability_stay": float(probabilities[0])
-        }
-        
-        # Update prediction statistics
-        self.neptune_run["monitoring/predictions_count"].log(1)
-        self.neptune_run["monitoring/predictions_by_department"][input_data["sales"]].log(1)
-        self.neptune_run["monitoring/predictions_by_result"][f"{'leave' if prediction[0] == 1 else 'stay'}"].log(1)
-        
-        # Log confidence distribution
-        self.neptune_run["monitoring/confidence_distribution"].log(float(max(probabilities)))
+        finally:
+            # Always stop the run
+            run.stop()
 
     def start_app(self):
         try:
@@ -79,9 +80,7 @@ class AttritionDeskApp:
                 
         except Exception as e:
             # Log any errors that occur
-            if self.neptune_run:
-                self.neptune_run["monitoring/errors"].log(str(e))
-            raise e
+            st.error(f"An error occurred: {str(e)}")
 
     def show_home(self):
         # Home page
@@ -129,7 +128,7 @@ class AttritionDeskApp:
 
         if st.button("Predict"):
             try:
-                # Prepare input data dictionary
+                # Prepare input data
                 input_data = {
                     "satisfaction_level": satisfaction_level,
                     "last_evaluation": last_evaluation,
@@ -142,30 +141,29 @@ class AttritionDeskApp:
                     "salary": salary
                 }
 
-                # Prepare features for prediction
                 numerical_features = np.array([[
-                    satisfaction_level, last_evaluation, number_project,
-                    average_montly_hours, time_spent_company
+                    satisfaction_level, 
+                    last_evaluation, 
+                    number_project, 
+                    average_montly_hours, 
+                    time_spent_company
                 ]])
-                numerical_features_scaled = self.scaler.transform(numerical_features)
                 binary_features = np.array([[work_accident, promotion_last_5years]])
                 categorical_features_df = pd.DataFrame([[sales, salary]], columns=['sales', 'salary'])
-                categorical_features_encoded = self.encoder.transform(categorical_features_df)
-                input_data_final = np.hstack((numerical_features_scaled, binary_features, categorical_features_encoded))
 
-                # Make prediction
-                prediction = self.model.predict(input_data_final)
-                prediction_prob = self.model.predict_proba(input_data_final)[0]
-
-                # Log prediction to Neptune
-                self.log_prediction(input_data, prediction, prediction_prob)
+                # Make prediction and log to Neptune
+                prediction, prediction_prob = self.make_prediction(
+                    input_data, 
+                    numerical_features, 
+                    binary_features, 
+                    categorical_features_df
+                )
 
                 # Display results
                 st.subheader("Prediction Probabilities:")
                 st.write(f"🔴 **Leaving Probability**: {prediction_prob[1] * 100:.2f}%")
                 st.write(f"🟢 **Staying Probability**: {prediction_prob[0] * 100:.2f}%")
 
-                # Display the prediction result
                 st.subheader("Prediction Result:")
                 if prediction[0] == 1:
                     st.error("The employee is likely to leave.")
@@ -175,14 +173,7 @@ class AttritionDeskApp:
                     st.image("Cloud-App/images/stay.png", use_container_width=True)
 
             except Exception as e:
-                if self.neptune_run:
-                    self.neptune_run["monitoring/prediction_errors"].log(str(e))
                 st.error(f"An error occurred: {str(e)}")
-
-    def __del__(self):
-        # Ensure Neptune run is stopped when the app is closed
-        if self.neptune_run:
-            self.neptune_run.stop()
 
 # Run the app
 if __name__ == "__main__":
