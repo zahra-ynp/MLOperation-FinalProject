@@ -14,25 +14,30 @@ class AttritionDeskApp:
         self.model = joblib.load('Cloud-App/best_model.pkl')  
         self.scaler = joblib.load('Cloud-App/scaler.pkl')  
         self.encoder = joblib.load('Cloud-App/encoder.pkl')
-        
-        # Initialize Neptune run for production monitoring
-        self.neptune_run = neptune.init_run(
-            project='440MI/AttritionDeskApp',
-            api_token=api_token,
-            tags=["production", "model-serving"],
-            name="AttritionDesk-Production"
-        )
-        
-        # Log model metadata
-        self.neptune_run["model/type"] = type(self.model).__name__
-        self.neptune_run["model/features"] = [
-            "satisfaction_level", "last_evaluation", "number_project",
-            "average_montly_hours", "time_spent_company", "work_accident",
-            "promotion_last_5years", "sales", "salary"
-        ]
+        self.neptune_run = None
+
+    def init_neptune(self):
+        """Initialize Neptune run only when needed"""
+        if self.neptune_run is None:
+            self.neptune_run = neptune.init_run(
+                project='440MI/AttritionDeskApp',
+                api_token=api_token,
+                tags=["production", "model-serving"],
+                name="AttritionDesk-Production"
+            )
+            
+            # Log model metadata
+            self.neptune_run["model/type"] = type(self.model).__name__
+            self.neptune_run["model/features"] = [
+                "satisfaction_level", "last_evaluation", "number_project",
+                "average_montly_hours", "time_spent_company", "work_accident",
+                "promotion_last_5years", "sales", "salary"
+            ]
 
     def log_prediction(self, input_data, prediction, probabilities):
         """Log prediction details to Neptune"""
+        self.init_neptune()  # Initialize Neptune if not already initialized
+        
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
         # Log prediction details
@@ -74,7 +79,8 @@ class AttritionDeskApp:
                 
         except Exception as e:
             # Log any errors that occur
-            self.neptune_run["monitoring/errors"].log(str(e))
+            if self.neptune_run:
+                self.neptune_run["monitoring/errors"].log(str(e))
             raise e
 
     def show_home(self):
@@ -169,12 +175,13 @@ class AttritionDeskApp:
                     st.image("Cloud-App/images/stay.png", use_container_width=True)
 
             except Exception as e:
-                self.neptune_run["monitoring/prediction_errors"].log(str(e))
+                if self.neptune_run:
+                    self.neptune_run["monitoring/prediction_errors"].log(str(e))
                 st.error(f"An error occurred: {str(e)}")
 
     def __del__(self):
         # Ensure Neptune run is stopped when the app is closed
-        if hasattr(self, 'neptune_run'):
+        if self.neptune_run:
             self.neptune_run.stop()
 
 # Run the app
