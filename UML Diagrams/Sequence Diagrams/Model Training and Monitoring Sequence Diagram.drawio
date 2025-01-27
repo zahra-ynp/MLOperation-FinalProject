@@ -1,0 +1,132 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36" version="26.0.8">
+  <diagram name="Pagina-1" id="3eaSiehocysVeD2RzV5I">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="jioHBpJW-xXQbczbb1e3-1" value="Data&amp;nbsp;&lt;div&gt;Engineer&lt;/div&gt;" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="50" y="20" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-2" value="Model Engineering Module" style="html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="60" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-3" value="Neptune" style="html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="430" y="60" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-6" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="60" y="150" width="10" height="490" as="geometry" />
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-7" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="250" y="150" width="10" height="490" as="geometry" />
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-8" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="480" y="150" width="10" height="490" as="geometry" />
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-11" value="" style="endArrow=none;dashed=1;html=1;rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="64.5" y="150" as="sourcePoint" />
+            <mxPoint x="65" y="120" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-12" value="" style="endArrow=none;dashed=1;html=1;rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="254.5" y="150" as="sourcePoint" />
+            <mxPoint x="255" y="120" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-13" value="" style="endArrow=none;dashed=1;html=1;rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="484.5" y="150" as="sourcePoint" />
+            <mxPoint x="485" y="120" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-16" value="Start Model Training" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry x="0.0065" width="80" relative="1" as="geometry">
+            <mxPoint x="70" y="170" as="sourcePoint" />
+            <mxPoint x="250" y="170" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-20" value="log tuning results" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry width="80" relative="1" as="geometry">
+            <mxPoint x="260" y="423" as="sourcePoint" />
+            <mxPoint x="480" y="423" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-22" value="log visualizations" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry width="80" relative="1" as="geometry">
+            <mxPoint x="260" y="513" as="sourcePoint" />
+            <mxPoint x="480" y="513" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-24" value="start model&amp;nbsp;&lt;div&gt;comparison&lt;/div&gt;" style="html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;edgeStyle=orthogonalEdgeStyle;curved=0;rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="260" y="453" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="290" y="453" />
+              <mxPoint x="290" y="483" />
+            </Array>
+            <mxPoint x="260" y="483" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-27" value="Confirm Monitoring Complete" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="480" y="553" as="sourcePoint" />
+            <mxPoint x="70" y="553" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-36" value="log metrics" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry x="0.0053" width="80" relative="1" as="geometry">
+            <mxPoint x="260" y="343" as="sourcePoint" />
+            <mxPoint x="480" y="343" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-37" value="train models" style="html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;edgeStyle=orthogonalEdgeStyle;curved=0;rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="260" y="233" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="290" y="233" />
+              <mxPoint x="290" y="263" />
+            </Array>
+            <mxPoint x="260" y="263" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-38" value="evaluate models" style="html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;edgeStyle=orthogonalEdgeStyle;curved=0;rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="260" y="283" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="290" y="283" />
+              <mxPoint x="290" y="313" />
+            </Array>
+            <mxPoint x="260" y="313" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-39" value="start hyperparameter&lt;div&gt;tuning&lt;/div&gt;" style="html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;edgeStyle=orthogonalEdgeStyle;curved=0;rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="260" y="363" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="290" y="363" />
+              <mxPoint x="290" y="393" />
+            </Array>
+            <mxPoint x="260" y="393" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-40" value="Stop Run" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry x="0.0065" width="80" relative="1" as="geometry">
+            <mxPoint x="70" y="593" as="sourcePoint" />
+            <mxPoint x="480" y="593" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jioHBpJW-xXQbczbb1e3-41" value="Start Run" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1" target="jioHBpJW-xXQbczbb1e3-8">
+          <mxGeometry x="0.0065" width="80" relative="1" as="geometry">
+            <mxPoint x="70" y="200" as="sourcePoint" />
+            <mxPoint x="250" y="200" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
