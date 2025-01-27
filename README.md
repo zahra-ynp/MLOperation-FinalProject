@@ -4,24 +4,6 @@ AttritionDesk is a machine learning application that predicts employee attrition
 
 Streamlit Cloud version is [here](https://attritiondesk.streamlit.app/)
 
-## Project Structure 
-MLOperation-FinalProject/
-├── Cloud-App/ # Streamlit web application
-│ ├── app.py # Main application code
-│ ├── best_model.pkl # Trained Random Forest model
-│ ├── scaler.pkl # StandardScaler for numerical features
-│ ├── encoder.pkl # OneHotEncoder for categorical features
-│ └── images/ # UI images
-│
-├── notebooks/ # Jupyter notebooks
-│ └── 003_model_training.ipynb # Model training and evaluation
-│
-├── data/ # Dataset
-│ └── HR.csv # Employee attrition dataset
-│
-└── artifacts/ # Model artifacts
-└── models/ # Saved model versions
-
 
 ## Components
 
