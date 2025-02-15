@@ -3,6 +3,7 @@
 AttritionDesk is a machine learning application that predicts employee attrition risk using various workplace factors. The project combines model training, monitoring, and a user-friendly web interface to help HR departments and managers make data-driven decisions about employee retention.
 
 Streamlit Cloud version is [here](https://attritiondesk.streamlit.app/)
+Dataset is available [here](https://www.kaggle.com/code/aminaidhm23386/resignation-probability-prediction)
 
 
 ## Components
